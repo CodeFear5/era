@@ -1,0 +1,84 @@
+Full Code — WeatherMining.java 
+import java.io.IOException; 
+import org.apache.hadoop.conf.Configuration; 
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapreduce.*; 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; 
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; 
+public class WeatherMining { 
+// ---------- MAPPER ---------- 
+    public static class WeatherMapper extends Mapper<LongWritable, Text, Text, Text> { 
+        @Override 
+        public void map(LongWritable key, Text value, Context context) 
+                throws IOException, InterruptedException { 
+ 
+            String line = value.toString().trim(); 
+            if (line.isEmpty()) return; 
+ 
+            String[] parts = line.split(","); 
+            if (parts.length < 4) return; 
+ 
+            String date = parts[0] + parts[1] + parts[2]; // 20150128 
+            double temp = Double.parseDouble(parts[3]); 
+ 
+            String condition; 
+            if (temp >= 35) 
+                condition = "Hot Day"; 
+            else if (temp >= 25) 
+                condition = "Warm Day"; 
+            else if (temp >= 15) 
+                condition = "Pleasant Day"; 
+            else if (temp >= 5) 
+                condition = "Cool Day"; 
+            else 
+                condition = "Cold Day"; 
+ 
+            // key = date (for reducer grouping) 
+            // value = condition,temp 
+            context.write(new Text(date), new Text(condition + "," + temp)); 
+        } 
+    } 
+ 
+    // ---------- REDUCER ---------- 
+    public static class WeatherReducer extends Reducer<Text, Text, Text, Text> { 
+        @Override 
+        public void reduce(Text key, Iterable<Text> values, Context context) 
+                throws IOException, InterruptedException { 
+ 
+            for (Text val : values) { 
+                String[] parts = val.toString().split(","); 
+                String condition = parts[0]; 
+                String temperature = parts[1]; 
+                // Final output format: "Condition Date Temperature" 
+                context.write(new Text(condition), new Text(key.toString() + " " + temperature)); 
+            } 
+        } 
+    } 
+ 
+    // ---------- MAIN ---------- 
+    public static void main(String[] args) throws Exception { 
+        Configuration conf = new Configuration(); 
+        Job job = Job.getInstance(conf, "Weather Data Mining"); 
+ 
+        job.setJarByClass(WeatherMining.class); 
+        job.setMapperClass(WeatherMapper.class); 
+        job.setReducerClass(WeatherReducer.class); 
+ 
+        job.setMapOutputKeyClass(Text.class); 
+job.setMapOutputValueClass(Text.class); 
+job.setOutputKeyClass(Text.class); 
+job.setOutputValueClass(Text.class); 
+FileInputFormat.addInputPath(job, new Path(args[0])); 
+FileOutputFormat.addOutputPath(job, new Path(args[1])); 
+System.exit(job.waitForCompletion(true) ? 0 : 1); 
+} 
+} 
+Run in Cloudera 
+Step 1 — Put file in HDFS 
+hdfs dfs -mkdir -p /user/cloudera/weather/input 
+hdfs dfs -put ~/Desktop/weather.txt /user/cloudera/weather/input/ 
+run: 
+hadoop jar WeatherMining.jar WeatherMining /user/cloudera/weather/input /user/cloudera/weather/output 
+output: 
+hdfs dfs -cat /user/cloudera/weather/output/part-r-00000 
