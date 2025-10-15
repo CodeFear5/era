@@ -1,21 +1,4 @@
-. Open Eclipse in Cloudera 
- Open Eclipse from Applications → Development → Eclipse. 
- Choose any workspace, for example: 
-/home/cloudera/workspace 
-2. Create Hadoop Project 
-1. File → New → Java Project 
-Name it: MatrixMultiplyProject 
-2. Right-click the project → Properties → Java Build Path → Libraries → Add External JARs 
-3. Add all Hadoop JARs: 
-4. /usr/lib/hadoop/*.jar   
-5. /usr/lib/hadoop/common/*.jar   
-6. /usr/lib/hadoop/mapreduce/*.jar   
-7. /usr/lib/hadoop/hdfs/*.jar   
-/usr/lib/hadoop/yarn/*.jar 
-
-3. Add Java Class 
-Right-click src → New → Class 
-Class name: MatrixMultiply 
+Code:
 import java.io.IOException; 
 import java.util.*; 
 import org.apache.hadoop.conf.Configuration; 
@@ -111,14 +94,12 @@ B,0,0,5
 B,0,1,6 
 B,1,0,7 
 B,1,1,8 
-Then open Terminal and run: 
-hdfs dfs -mkdir -p /user/cloudera/matrix/input 
-hdfs dfs -put ~/Desktop/matrix.txt /user/cloudera/matrix/input/ 
-Method 2 — Export and Run in Terminal 
-If Eclipse doesn’t show output, export it as a jar: 
-1. Right-click → Export → Runnable JAR file 
-2. Save as MatrixMultiply.jar 
-3. Run in Cloudera terminal: 
-hadoop jar MatrixMultiply.jar MatrixMultiply  /user/cloudera/matrix/input   /user/cloudera/matrix/output 
-Final output: 
-hdfs dfs -cat /user/cloudera/matrix/output/part-r-00000 
+
+100% working commands
+
+[cloudera@quickstart Desktop]$ hadoop dfs -mkdir /matin 
+[cloudera@quickstart Desktop]$ hadoop dfs -copyFromLocal matrix.txt /matin 
+[cloudera@quickstart Desktop]$ hadoop dfs -cat /user/root/matin/matrix.txt 
+[cloudera@quickstart Desktop]$ hadoop jar MatMul.jar MatMul /user/root/matin 
+/user/root/matout 
+[cloudera@quickstart Desktop]$ hadoop dfs -cat /user/root/matout/part-r-00000 
