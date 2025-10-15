@@ -1,0 +1,124 @@
+. Open Eclipse in Cloudera 
+ Open Eclipse from Applications → Development → Eclipse. 
+ Choose any workspace, for example: 
+/home/cloudera/workspace 
+2. Create Hadoop Project 
+1. File → New → Java Project 
+Name it: MatrixMultiplyProject 
+2. Right-click the project → Properties → Java Build Path → Libraries → Add External JARs 
+3. Add all Hadoop JARs: 
+4. /usr/lib/hadoop/*.jar   
+5. /usr/lib/hadoop/common/*.jar   
+6. /usr/lib/hadoop/mapreduce/*.jar   
+7. /usr/lib/hadoop/hdfs/*.jar   
+/usr/lib/hadoop/yarn/*.jar 
+
+3. Add Java Class 
+Right-click src → New → Class 
+Class name: MatrixMultiply 
+import java.io.IOException; 
+import java.util.*; 
+import org.apache.hadoop.conf.Configuration; 
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapreduce.*; 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; 
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; 
+public class MatrixMultiply { 
+public static class MatrixMapper extends Mapper<LongWritable, Text, Text, Text> 
+{ 
+private int p = 2; // columns in B 
+private int m = 2; // rows in A 
+public void map(LongWritable key, Text value, Context context) 
+throws IOException, InterruptedException { 
+String[] parts = value.toString().split(","); 
+String matrix = parts[0]; 
+int i = Integer.parseInt(parts[1]); 
+            int j = Integer.parseInt(parts[2]); 
+            double v = Double.parseDouble(parts[3]); 
+ 
+            if (matrix.equals("A")) { 
+                for (int col = 0; col < p; col++) { 
+                    context.write(new Text(i + "," + col), new Text("A," + j + "," 
++ v)); 
+                } 
+            } else { 
+                for (int row = 0; row < m; row++) { 
+                    context.write(new Text(row + "," + j), new Text("B," + i + "," 
++ v)); 
+                } 
+            } 
+        } 
+    } 
+ 
+    public static class MatrixReducer extends Reducer<Text, Text, Text, 
+DoubleWritable> { 
+        public void reduce(Text key, Iterable<Text> values, Context context) 
+                throws IOException, InterruptedException { 
+ 
+            Map<Integer, Double> A = new HashMap<>(); 
+            Map<Integer, Double> B = new HashMap<>(); 
+ 
+            for (Text val : values) { 
+                String[] parts = val.toString().split(","); 
+                if (parts[0].equals("A")) { 
+                    A.put(Integer.parseInt(parts[1]), 
+Double.parseDouble(parts[2])); 
+                } else { 
+                    B.put(Integer.parseInt(parts[1]), 
+Double.parseDouble(parts[2])); 
+                } 
+            } 
+ 
+            double sum = 0.0; 
+            for (int k : A.keySet()) { 
+                if (B.containsKey(k)) { 
+                    sum += A.get(k) * B.get(k); 
+                } 
+            } 
+ 
+            context.write(key, new DoubleWritable(sum)); 
+        } 
+    } 
+ 
+    public static void main(String[] args) throws Exception { 
+        Configuration conf = new Configuration(); 
+        Job job = Job.getInstance(conf, "Matrix Multiplication"); 
+ 
+        job.setJarByClass(MatrixMultiply.class); 
+        job.setMapperClass(MatrixMapper.class); 
+        job.setReducerClass(MatrixReducer.class); 
+ 
+        job.setMapOutputKeyClass(Text.class); 
+        job.setMapOutputValueClass(Text.class); 
+job.setOutputKeyClass(Text.class); 
+job.setOutputValueClass(DoubleWritable.class); 
+FileInputFormat.addInputPath(job, new Path(args[0])); 
+FileOutputFormat.addOutputPath(job, new Path(args[1])); 
+System.exit(job.waitForCompletion(true) ? 0 : 1); 
+} 
+} 
+
+
+
+4. Create Input Data 
+Create a text file on your Cloudera desktop named matrix.txt: 
+A,0,0,1 
+A,0,1,2 
+A,1,0,3 
+A,1,1,4 
+B,0,0,5 
+B,0,1,6 
+B,1,0,7 
+B,1,1,8 
+Then open Terminal and run: 
+hdfs dfs -mkdir -p /user/cloudera/matrix/input 
+hdfs dfs -put ~/Desktop/matrix.txt /user/cloudera/matrix/input/ 
+Method 2 — Export and Run in Terminal 
+If Eclipse doesn’t show output, export it as a jar: 
+1. Right-click → Export → Runnable JAR file 
+2. Save as MatrixMultiply.jar 
+3. Run in Cloudera terminal: 
+hadoop jar MatrixMultiply.jar MatrixMultiply  /user/cloudera/matrix/input   /user/cloudera/matrix/output 
+Final output: 
+hdfs dfs -cat /user/cloudera/matrix/output/part-r-00000 
