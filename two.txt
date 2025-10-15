@@ -74,11 +74,22 @@ FileOutputFormat.addOutputPath(job, new Path(args[1]));
 System.exit(job.waitForCompletion(true) ? 0 : 1); 
 } 
 } 
-Run in Cloudera 
-Step 1 — Put file in HDFS 
-hdfs dfs -mkdir -p /user/cloudera/weather/input 
-hdfs dfs -put ~/Desktop/weather.txt /user/cloudera/weather/input/ 
-run: 
-hadoop jar WeatherMining.jar WeatherMining /user/cloudera/weather/input /user/cloudera/weather/output 
-output: 
-hdfs dfs -cat /user/cloudera/weather/output/part-r-00000 
+
+datafileofweather.txt
+2015,01,01,12
+2015,01,02,15
+2015,01,03,5
+2015,01,04,20
+2015,01,05,36
+2015,01,06,8
+2015,01,07,25
+2015,01,08,18
+
+
+!00% working commands
+
+[cloudera@quickstart ~]$ hdfs dfs –mkdir /maxinput 
+[cloudera@quickstart ~]$ cd Desktop 
+[cloudera@quickstart Desktop]$ hdfs dfs -copyFromLocal datafileofweather.txt  /maxinput 
+[cloudera@quickstart Desktop]$ hadoop jar MaxTemp.jar MyMaxMin /maxinput /maxoutput 
+[cloudera@quickstart Desktop]$ hdfs dfs -cat /maxoutput/part-r-00000 
