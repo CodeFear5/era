@@ -1,4 +1,5 @@
-.movie 
+MoviesTags
+===========
  
 1. movie.txt 
 movieId,title,genres 
@@ -119,15 +120,17 @@ public class Movie {
     }
 }
 
- 
-How to Run 
-1. Upload movie.txt and tags.txt to HDFS: 
-hdfs dfs -mkdir -p /user/cloudera/movies 
-hdfs dfs -put ~/Desktop/movie.txt /user/cloudera/movies/ 
-hdfs dfs -put ~/Desktop/tags.txt /user/cloudera/movies/ 
-after jar ready: 
-hadoop jar MovieTagsJoin.jar MovieTagsJoin /user/cloudera/movies/movie.txt /user/cloudera/movies/tags.txt 
-/user/cloudera/movies/output 
-output: 
 
-hdfs dfs -cat /user/cloudera/movies/output/part-r-00000 
+100% working commands
+
+[cloudera@quickstart ~]$ hdfs dfs -mkdir /movie 
+[cloudera@quickstart ~]$ hdfs dfs -mkdir /tag 
+[cloudera@quickstart ~]$ cd Desktop 
+[cloudera@quickstart Desktop]$ hdfs dfs -copyFromLocal Movie.txt /movie 
+[cloudera@quickstart Desktop]$ hdfs dfs -copyFromLocal Tags.txt /tag 
+[cloudera@quickstart Desktop]$ hdfs dfs -cat /movie/Movie.txt 
+[cloudera@quickstart Desktop]$ hdfs dfs -cat /tag/Tags.txt 
+
+[cloudera@quickstart Desktop]$ hadoop jar MovieTagsJoin.jar MovieTagsJoin /movie /tag 
+/user/root/movietag1 
+[cloudera@quickstart Desktop]$ hadoop dfs -cat /user/root/movietag1/part-r-00000
